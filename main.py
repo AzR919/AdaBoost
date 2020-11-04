@@ -7,6 +7,7 @@
 
 import numpy as np
 import argparse
+import matplotlib.pyplot as plt
 
 class Data():
     def __init__(self, data_train_root, data_test_root):
@@ -96,6 +97,9 @@ class Ada_boost():
     
     def train(self, data):
 
+        train_accs = []
+        test_accs = []
+
         for i in range(self.num_epochs):
             print("Begin Train Epoch : {}/{}".format(i+1, self.num_epochs))
 
@@ -111,9 +115,19 @@ class Ada_boost():
 
             print("Data in Epoch:= val:{}, dim:{}, dir:{}, e:{}".format(val, dim, dir, e))
 
-            print("Train acc : {}, Test acc : {}".format(self.eval_model(data.train_f, data.train_l), self.eval_model(data.test_f, data.test_l)))
+            #import ipdb; ipdb.set_trace()
+
+            train_acc = self.eval_model(data.train_f, data.train_l)
+            test_acc = self.eval_model(data.test_f, data.test_l)
+
+            train_accs.append(train_acc)
+            test_accs.append(test_acc)
+
+            print("Train acc : {}, Test acc : {}".format(train_acc, test_acc))
 
             print("-----------------------------------------")
+
+        return train_accs, test_accs
 
     def ada_predict(self, sub_data):
 
@@ -130,9 +144,9 @@ class Ada_boost():
             else:
                 preds_i = self.pred_trans(sub_data[:,dim] <= val)
 
-            preds += self.beta[i] * preds_i
+            preds += (self.beta[i] * preds_i)
 
-        return self.pred_trans(preds>=0)
+        return self.pred_trans(preds<0)
 
     def eval_model(self, sub_data, sub_l):
 
@@ -142,14 +156,13 @@ class Ada_boost():
 
 
 
-
 def arg_parser():
 
     parser = argparse.ArgumentParser("Argument parser for AdaBoost")
     parser.add_argument("--train_root", type=str, default='../datasets/train_adaboost.csv', help="path to the training data")
     parser.add_argument("--test_root", type=str, default='../datasets/test_adaboost.csv', help="path to the test data")
 
-    parser.add_argument("--num_epochs", type=int, default=10, help='number of epochs to train for')
+    parser.add_argument("--num_epochs", type=int, default=50, help='number of epochs to train for')
 
     args = parser.parse_args()
 
@@ -180,10 +193,22 @@ if __name__ == "__main__":
     print("Begin Training")
     print("-----------------------------------------")
 
-    model.train(data)
-    #import ipdb; ipdb.set_trace()
+    train_accs, test_accs = model.train(data)
+    
     print("-----------------------------------------")
-    print("Finish Loading Data")
+    print("Finish Training")
+    print("-----------------------------------------")
+
+    plt.plot(train_accs, label="Train_Acc")
+    plt.plot(test_accs, label="Test_Acc")
+    plt.xlabel("epochs")
+    plt.ylabel("Accuracy")
+    plt.legend()
+    plt.title("Accuracies over training epochs")
+    plt.show()
+
+    print("-----------------------------------------")
+    print("All Done")
     print("-----------------------------------------")
 
 
